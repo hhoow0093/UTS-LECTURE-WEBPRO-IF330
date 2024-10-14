@@ -1,3 +1,10 @@
+<?php
+// sudah ada admin
+// admin.umn.ac.id.com -> email admin
+// adminUMN -> username admin
+// adminumn123 ->password admin
+// admin  -> role
+?>
 <!DOCTYPE html>
 <html lang="en">
 

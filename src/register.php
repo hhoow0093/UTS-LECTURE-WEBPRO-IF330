@@ -1,3 +1,30 @@
+<?php
+require "./function.php";
+$showModal = false;
+
+if (isset($_POST["submit-register"])) {
+    $registerResult = register($_POST);
+    if ($registerResult === 0) {
+        $message = "anda berhasil registrasi";
+        $showModal = true;
+    } else if ($registerResult === 1) {
+        $message = "konfirmasi password salah!";
+        $showModal = true;
+    } else if ($registerResult === -1) {
+        $message = "database bermasalah";
+        $showModal = true;
+    } else if ($registerResult === -2) {
+        $message = "masukkan data yang lengkap";
+        $showModal = true;
+    } else if ($registerResult === -3) {
+        $message = "username hanya boleh 10 kata";
+        $showModal = true;
+    } else if ($registerResult === -4) {
+        $message = "silahkan pilih email yang lain";
+        $showModal = true;
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -17,11 +44,6 @@
         margin: 0;
         padding: 0;
     }
-    /* habis buat tampilan login, buat halaman register terlebih dahulu. 
-    pada saat halaman regsiter selesai, manipulasi database untuk membuat tabel baru untuk user (biar lihat histori), 
-    dan masukkan informasi user ke dalam database untuk admin*/
-
-    /*jika berhasil login, maka session login selalu ada*/
 </style>
 
 <body>
@@ -47,38 +69,65 @@
             <div class="row justify-content-center ">
                 <div class="col-6 bg-white p-5" id="tampilan-login">
                     <h1 class="mb-5">Register page</h1>
-                    <form class="container-fluid needs-validation" novalidate>
+                    <form class="container-fluid needs-validation" novalidate="" method="post" action="">
                         <div class="mb-3">
-                            <label for="emailMahasiswaRegister" class="form-label">Student Email</label>
-                            <input type="email" class="form-control" id="emailMahasiswaRegister" name="emailMahasiswaRegsiter">
-                            <div class="invalid-feedback">masukkan email student yang benar!</div>
+                            <label for="emailMahasiswaRegister" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="emailMahasiswaRegister" name="emailMahasiswaRegister">
                             <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
                         </div>
                         <div class="mb-3">
                             <label for="usernameRegister" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="usernameRegister" name="usernameRegister" >
-                            <div class="invalid-feedback">Username hanya boleh tepat 10 kata!</div>
+                            <input type="text" class="form-control" id="usernameRegister" name="usernameRegister">
                             <div class="form-text">Username untuk halaman utama</div>
                         </div>
                         <div class="mb-3">
                             <label for="PasswordRegister" class="form-label">Password</label>
                             <input type="password" class="form-control" id="PasswordRegister" name="PasswordRegister">
-                            <div class="invalid-feedback">Masukkan password yang benar</div>
                         </div>
                         <div class="mb-3">
                             <label for="PasswordRegisterConfirmation" class="form-label">Konfirmasi Password</label>
                             <input type="password" class="form-control" id="PasswordRegisterConfirmation" name="PasswordRegisterConfirmation">
-                            <div class="invalid-feedback">Masukkan password yang benar</div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Register!</button>
+                        <button type="submit" class="btn btn-primary" name="submit-register">Register!</button>
                     </form>
                 </div>
             </div>
-
         </div>
-
     </div>
+    <!--pop up alert-->
+    <div class="modal fade" id="AlertPopup" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Alert!</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body modal-di-alert">
+                    ...
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./Js/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-</body>
+    <script>
+        $(document).ready(function() {
+            <?php if ($showModal) { ?>
+                var myModal = new bootstrap.Modal(document.getElementById('AlertPopup'), {
+                    keyboard: false
+                });
+                var Message = "<?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>";
+                $(".modal-di-alert").html(Message);
+                myModal.show();
 
+                // Redirect after 5 seconds if registration is successful
+                <?php if ($registerResult === 0) { ?>
+                    setTimeout(function() {
+                        window.location.href = 'login.php';
+                    }, 5000);
+                <?php } ?>
+            <?php } ?>
+        });
+    </script>
+</body>
 </html>

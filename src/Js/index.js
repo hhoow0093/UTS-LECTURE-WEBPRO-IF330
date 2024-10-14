@@ -9,7 +9,7 @@ function setEventDetails(eventDetails) {
 }
 
 $('#dropdownEvent').click(function (e) { 
-    console.log("bekerja");
+    // console.log("bekerja");
     e.preventDefault();
     const targetId = $(this).attr('data-target');
     document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });  
