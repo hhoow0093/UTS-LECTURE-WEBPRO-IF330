@@ -22,6 +22,12 @@ if (isset($_POST["submit-register"])) {
     } else if ($registerResult === -4) {
         $message = "silahkan pilih email yang lain";
         $showModal = true;
+    }else if ($registerResult === -5) {
+        $message = "masukkan email student yang tepat";
+        $showModal = true;
+    }else if ($registerResult === -6) {
+        $message = "email harus student";
+        $showModal = true;
     }
 }
 ?>
@@ -71,9 +77,9 @@ if (isset($_POST["submit-register"])) {
                     <h1 class="mb-5">Register page</h1>
                     <form class="container-fluid needs-validation" novalidate="" method="post" action="">
                         <div class="mb-3">
-                            <label for="emailMahasiswaRegister" class="form-label">Email</label>
+                            <label for="emailMahasiswaRegister" class="form-label">Student Email</label>
                             <input type="email" class="form-control" id="emailMahasiswaRegister" name="emailMahasiswaRegister">
-                            <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                            <div id="emailHelp" class="form-text">masukkan student email anda.</div>
                         </div>
                         <div class="mb-3">
                             <label for="usernameRegister" class="form-label">Username</label>
@@ -124,7 +130,7 @@ if (isset($_POST["submit-register"])) {
                 <?php if ($registerResult === 0) { ?>
                     setTimeout(function() {
                         window.location.href = 'login.php';
-                    }, 5000);
+                    }, 2000);
                 <?php } ?>
             <?php } ?>
         });
