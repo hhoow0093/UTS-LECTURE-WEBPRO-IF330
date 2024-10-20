@@ -24,19 +24,17 @@ function register($data)
 
     //untuk memastikan pada saat registrasi, format user pada email adalah @student.umn.ac.id
 
-    if(strpos($studentEmail, '@')){
-         $checkEmailArray = explode("@", $studentEmail);
-         $acceptedFormat =  "student.umn.ac.id";
-         $formatInput = end($checkEmailArray);
-         if($formatInput !== $acceptedFormat){
+    if (strpos($studentEmail, '@')) {
+        $checkEmailArray = explode("@", $studentEmail);
+        $acceptedFormat =  "student.umn.ac.id";
+        $formatInput = end($checkEmailArray);
+        if ($formatInput !== $acceptedFormat) {
             return -6; //berarti emailnya bukan student.
-         }
-
-
-    }else{
+        }
+    } else {
         return -5; //masukkan student email yang benar!
     }
-    
+
     $check = "SELECT * FROM account WHERE email = '$studentEmail'";
     $keranjang = mysqli_query($koneksiDB, $check);
     if (mysqli_num_rows($keranjang) > 0) {
@@ -89,12 +87,13 @@ function register($data)
     }
 }
 
-function loginStudent($data) {
+function loginStudent($data)
+{
     global $koneksiDB;
     $emailStudent = htmlspecialchars(trim($data["emailStudent"]));
     $studentPass = htmlspecialchars(trim($data["studentPassword"]));
 
-    if($emailStudent === "admin@umn.ac.id.com"){
+    if ($emailStudent === "admin@umn.ac.id.com") {
         return -4; //admin tidak boleh login sini
     }
 
@@ -127,20 +126,42 @@ function loginStudent($data) {
     }
 }
 
-function daftarEvent($dataStudent, $namaEvent){
+function daftarEvent($dataStudent, $namaEvent)
+{
     global $koneksiDB;
     $studentEmail = $dataStudent["email"];
+    // cek jika melebihi kuota
+    $checkKuota = "SELECT maksimum_participant FROM eventlist WHERE namaEvent = '$namaEvent'";
+    $resultKuota = mysqli_query($koneksiDB, $checkKuota);
+    if ($resultKuota) {
+        $rowKuota = mysqli_fetch_assoc($resultKuota);
+        $maksimumParticipant = $rowKuota['maksimum_participant'];
+
+        $countParticipants = "SELECT COUNT(*) as total FROM `$namaEvent`";
+        $resultCount = mysqli_query($koneksiDB, $countParticipants);
+        $rowCount = mysqli_fetch_assoc($resultCount);
+        $currentParticipants = $rowCount['total'];
+
+        if ($currentParticipants >= $maksimumParticipant) {
+            return -5; // Event quota exceeded
+        }
+    } else {
+        error_log("Error executing quota check query: " . mysqli_error($koneksiDB));
+        return -6; // Error in quota check query
+    }
+
+
     $check = "SELECT * FROM `$namaEvent` WHERE email = '$studentEmail'";
     $checkMaksimumDaftar = "SELECT * FROM `$studentEmail`";
     $keranjangMaksDaftar = mysqli_query($koneksiDB, $checkMaksimumDaftar);
-    if(mysqli_num_rows($keranjangMaksDaftar) > 5){
+    if (mysqli_num_rows($keranjangMaksDaftar) > 5) {
         return -4; //student tidak boleh daftar event lebih dari 5.
     }
     $keranjang = mysqli_query($koneksiDB, $check);
     if (mysqli_num_rows($keranjang) > 0) {
         return -3; // student tidak boleh daftar event 2 kali.
     }
-    
+
     $perintah1 = "INSERT INTO `$namaEvent` VALUES ('', '$studentEmail')";
     $perintah2 = "INSERT INTO `$studentEmail` VALUES('', '$namaEvent')";
 
@@ -158,7 +179,8 @@ function daftarEvent($dataStudent, $namaEvent){
     return 1; // sukses
 }
 
-function hapusEvent($id, $emailStudent, $namaEvent){
+function hapusEvent($id, $emailStudent, $namaEvent)
+{
     global $koneksiDB;
 
     $id = (int)$id;
@@ -176,6 +198,32 @@ function hapusEvent($id, $emailStudent, $namaEvent){
         }
     } else {
         return -1; // failure on first query
+    }
+}
+
+function editMahasiswaUser($data, $idSISWA)
+{
+    global $koneksiDB;
+    // $emailMahasiswa = $data["EmailStudent"];
+    $username = mysqli_real_escape_string($koneksiDB, $data["userNamesiswa"]);
+    $password = $data["PasswordSiswa"];
+
+    if ($password === "") {
+        $perintah = "UPDATE account SET username = '$username' WHERE id = $idSISWA";
+    } else {
+        $hashedPass = password_hash($password, PASSWORD_BCRYPT);
+        $hashedPass = mysqli_real_escape_string($koneksiDB, $hashedPass);
+        $perintah = "UPDATE account SET 
+            username = '$username',
+            password = '$hashedPass'
+            WHERE id = $idSISWA";
+    }
+
+    if (mysqli_query($koneksiDB, $perintah)) {
+        return 1;
+    } else {
+        error_log("Error executing query: " . mysqli_error($koneksiDB));
+        return 0;
     }
 }
 
@@ -228,6 +276,3 @@ function hapusEvent($id, $emailStudent, $namaEvent){
 // $oldTableName = 'old_users';
 // $newTableName = 'new_users';
 // renameTable($oldTableName, $newTableName, $koneksiDB);
-
-?>
-

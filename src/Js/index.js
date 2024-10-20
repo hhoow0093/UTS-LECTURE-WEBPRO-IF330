@@ -8,12 +8,12 @@ function setEventDetails(eventDetails) {
     pict.setAttribute('src', `../img Event/${details.namaGambar}`);
     title.textContent = details.namaEvent;
     desc.textContent = details.description;
-    date.textContent = details.tanggalEvent;
+    date.textContent = `${details.tanggalEvent} | ${details.lokasi} | ${details.waktu}`;
     submitTitle.setAttribute('value', `${details.namaEvent}`);
     // console.log(submitTitle.value);
 }
 
-$('#dropdownEvent').click(function (e) { 
+$('.dropdownEvent').click(function (e) { 
     // console.log("bekerja");
     e.preventDefault();
     const targetId = $(this).attr('data-target');
