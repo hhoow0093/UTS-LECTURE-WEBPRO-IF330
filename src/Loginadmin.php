@@ -2,27 +2,20 @@
 require "./function.php";
 $showModal = false;
 
-if (isset($_POST['login'])) {
-    $resultLoginStudent = loginStudent($_POST);
-    if($resultLoginStudent === 1){
-        $message = "anda berhasil login!";
+if (isset($_POST['loginAdmin'])) {
+    // var_dump($_POST);
+    $resultLogin = loginAdmin($_POST);
+    if($resultLogin === 0){
+        $message = "data yang diisi tidak boleh kosong!";
         $showModal = true;
-    }else if($resultLoginStudent === 0){
-        $message = "password yang salah!";
+    }
+    else if($resultLogin === -1){
+        $message = "data yang diisi salah!";
         $showModal = true;
-    }else if ($resultLoginStudent === -3){
-        $message = "email yang dimasukkan tidak terdaftar atau form kosong!";
+    }
+    else if($resultLogin === 1){
+        $message = "sukses login!";
         $showModal = true;
-    }else if( $resultLoginStudent === -2){
-        $message = "eksekusi gagal";
-        $showModal = true;
-    }else if($resultLoginStudent === -1){
-        $message = "preperasi gagal";
-        $showModal = true;
-    }else if($resultLoginStudent === -4){
-        $message = "admin tidak boleh login sini!";
-        $showModal = true;
-
     }
 }
 ?>
@@ -45,12 +38,6 @@ if (isset($_POST['login'])) {
         margin: 0;
         padding: 0;
     }
-
-    /* habis buat tampilan login, buat halaman register terlebih dahulu. 
-    pada saat halaman regsiter selesai, manipulasi database untuk membuat tabel baru untuk user (biar lihat histori), 
-    dan masukkan informasi user ke dalam database untuk admin*/
-
-    /*jika berhasil login, maka session login selalu ada*/
 </style>
 
 <body>
@@ -65,9 +52,6 @@ if (isset($_POST['login'])) {
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link mx-2" href="./Loginadmin.php">Admin login</a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link mx-2" href="./index.php">Main page</a>
                         </li>
                     </ul>
@@ -78,21 +62,18 @@ if (isset($_POST['login'])) {
         <div class="container login-form">
             <div class="row justify-content-center ">
                 <div class="col-6 bg-white p-5" id="tampilan-login">
-                    <h1 class="mb-5">Login page</h1>
+                    <h1 class="mb-5">Admin Login Page</h1>
                     <form class="container-fluid" method="post" action="">
                         <div class="mb-3">
-                            <label for="emailStudent" class="form-label">Student Email</label>
-                            <input type="email" class="form-control" id="emailStudent" aria-describedby="emailHelp" name="emailStudent">
-                            <div id="emailHelp" class="form-text">masukkan email student UMN</div>
+                            <label for="emailAdmin" class="form-label">Admin Email</label>
+                            <input type="email" class="form-control" id="emailAdmin" aria-describedby="emailHelp" name="emailAdmin">
+                            <div id="emailHelp" class="form-text">masukkan email admin</div>
                         </div>
                         <div class="mb-3">
-                            <label for="studentPassword" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="studentPassword" name="studentPassword">
+                            <label for="adminPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="adminPassword" name="adminPassword">
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label">Click <a href="./register.php">here</a> to register</label>
-                        </div>
-                        <button type="submit" class="btn btn-primary" name="login">Login</button>
+                        <button type="submit" class="btn btn-primary" name="loginAdmin">Login</button>
                     </form>
                 </div>
             </div>
@@ -127,9 +108,9 @@ if (isset($_POST['login'])) {
                 myModal.show();
 
                 // Redirect after 5 seconds if registration is successful
-                <?php if ($resultLoginStudent === 1) { ?>
+                <?php if ($resultLogin === 1) { ?>
                     setTimeout(function() {
-                        window.location.href = 'index.php';
+                        window.location.href = 'indexAdmin.php';
                     }, 2000);
                 <?php } ?>
             <?php } ?>

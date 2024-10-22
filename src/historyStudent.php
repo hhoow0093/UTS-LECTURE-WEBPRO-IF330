@@ -2,6 +2,11 @@
 require "./function.php";
 $showModal = false;
 
+if(isset($_SESSION["login-admin"])){
+    header("Location: indexAdmin.php");
+    exit();
+}
+
 if (!isset($_SESSION["login-user"])) {
     header("Location: index.php");
     exit;

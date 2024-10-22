@@ -227,6 +227,129 @@ function editMahasiswaUser($data, $idSISWA)
     }
 }
 
+function loginAdmin($data)
+{
+    // data admin
+    // email : admin@umn.ac.id.com
+    // password : adminumn123
+    global $koneksiDB;
+    $AdminEmail = $data["emailAdmin"];
+    $AdminPassword = $data["adminPassword"];
+    if (empty($AdminEmail) || empty($AdminPassword)) {
+        return 0; //tidak boleh kosong
+    }
+    $perintah = "SELECT * FROM account WHERE email = ?";
+    $stmt = $koneksiDB->prepare("$perintah");
+    $stmt->bind_param("s", $AdminEmail);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    //data admin ketemu
+    if (mysqli_num_rows($result) === 1) {
+        $row = $result->fetch_assoc();
+        $passwordAdminDataBase = $row["password"];
+
+        if (password_verify($AdminPassword, $passwordAdminDataBase)) {
+            $_SESSION["login-admin"] = true;
+            $_SESSION["data-admin"] = $row;
+            return 1;
+        } else {
+            return -1; // password salah
+
+        }
+    } else {
+        return -1; // data admin tidak ketemu
+    }
+}
+
+function getJumlahPendaftar($namaEvent)
+{
+    global $koneksiDB;
+    $countParticipants = "SELECT COUNT(*) as total FROM `$namaEvent`";
+    $result = mysqli_query($koneksiDB, $countParticipants);
+
+    if ($result) {
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'];
+    } else {
+        return 0; // gak ada yang daftar
+    }
+}
+
+function addEvent($data)
+{
+    global $koneksiDB;
+    define('BASE_DIR', dirname(__FILE__) . '/../img Event/');
+
+    $eventName = $data["NamaEvent"];
+    $tanggalEvent = $data["EventDate"];
+    $waktu = $data["Time"];
+    $lokasi = $data["Location"];
+    $jumlahKuota = $data["participants"];
+    $deskripsi = $data["description"];
+
+    $fotoError = $_FILES["Picture"]["error"];
+    $namaFoto = $_FILES["Picture"]["name"];
+    $tempName = $_FILES["Picture"]["tmp_name"];
+
+    $ekstensiFotoValid = ["jpg", "jpeg", "png"];
+    $ekstensiFoto = explode(".", $namaFoto);
+    $ekstensiFoto = strtolower(end($ekstensiFoto));
+
+    // cek jika ada tabel yang sama, jika sama berarti sudah ada eventnya
+    $checkTableQuery = "SHOW TABLES LIKE '$eventName'";
+    $result = mysqli_query($koneksiDB, $checkTableQuery);
+
+    $flag = false;
+
+    if (mysqli_num_rows($result) == 0) {
+        $perintahTabel = "CREATE TABLE `$eventName` (
+                            id INT PRIMARY KEY AUTO_INCREMENT,
+                            email VARCHAR(100)
+                          )";
+        if (mysqli_query($koneksiDB, $perintahTabel)) {
+            $flag = true; //bisa lanjut proses pembuatan event
+        } else {
+            $flag = false; // tidak bisa lanjut
+        }
+    } else {
+        $flag = false; // tidak bisa lanjut
+    }
+
+    if ($flag) {
+        // cek jika form kosong
+        if (empty($eventName) || empty($tanggalEvent) || empty($waktu) || empty($lokasi) || empty($jumlahKuota) || empty($deskripsi) || $fotoError === 4) {
+            return 0; // artinya form belum diisi dengan lengkap
+        } else if (!in_array($ekstensiFoto, $ekstensiFotoValid)) {
+            return -1; //ekstensi foto yang salah
+        } else {
+            // Ensure unique photo name
+            $namaFoto = uniqid() . "." . $ekstensiFoto;
+            $perintah = "INSERT INTO eventlist (namaEvent, tanggalEvent, description, namaGambar, waktu, lokasi, maksimum_participant) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $koneksiDB->prepare($perintah);
+            if ($stmt === false) {
+                // Handle error in preparing the statement
+                return -2;
+            }
+            $stmt->bind_param("sssssss", $eventName, $tanggalEvent, $deskripsi, $namaFoto, $waktu, $lokasi, $jumlahKuota);
+            $executeResult = $stmt->execute();
+            if ($executeResult === false) {
+                // Handle error in executing the statement
+                return -3;
+            }
+
+            $imgDirectory = BASE_DIR;
+            if (!move_uploaded_file($tempName, $imgDirectory . $namaFoto)) {
+                // Handle error in moving the uploaded file
+                return -4;
+            }
+            return 1;
+        }
+    }else{
+        return -5;
+    }
+}
+
 // untuk cari tabel pada database
 
 // $databaseName = 'your_database_name';
