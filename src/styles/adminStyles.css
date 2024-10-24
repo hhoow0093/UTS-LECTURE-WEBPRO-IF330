@@ -36,4 +36,15 @@ html>* {
     text-decoration: none;
 }
 
+/* Hover effects for navbar links */
+.navbar-nav .nav-link {
+    transition: color 0.3s, background-color 0.3s;
+    color: white;
+}
 
+.navbar-nav .nav-link:hover {
+    color: #ADD8E6;
+    /* Lighter blue */
+    background-color: rgba(255, 255, 255, 0.1);
+    /* Slight white background */
+}

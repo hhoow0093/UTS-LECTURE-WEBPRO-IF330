@@ -2,7 +2,8 @@
 require "./function.php";
 $showModal = false;
 
-if(isset($_SESSION["login-admin"])){
+
+if (isset($_SESSION["login-admin"])) {
     header("Location: indexAdmin.php");
     exit();
 }
@@ -14,29 +15,89 @@ if (!isset($_SESSION["login-user"])) {
     $dataStudent = $_SESSION["safe_user_data"];
     $studentEmail = $dataStudent["email"];
     $perintah = "SELECT * FROM `$studentEmail`";
+
     $historyList = getDATA($perintah);
-    $counter = 1;
+    $perintah2 = "SELECT * FROM eventlist";
+    $listEvent = getDATA($perintah2);
 
-    if (isset($_GET["id"]) && isset($_GET["namaEvent"])) {
-        if (hapusEvent($_GET["id"], $studentEmail, $_GET["namaEvent"]) === 1) {
-            $_SESSION["message"] = "berhasil di cancel";
-            $_SESSION["showModal"] = true;
-            echo "<script>document.location.href = 'historyStudent.php';</script>";
-        } else {
-            $_SESSION["message"] = "query error";
-            $_SESSION["showModal"] = true;
-            echo "<script>document.location.href = 'historyStudent.php';</script>";
+    //konversi data nama event dari eventlist jadi array numerik
+    $datanumerikEVENTLIST = [];
+    $dataidNumerikEVENTLIST = [];
+    foreach ($listEvent as $arr) {
+        $datanumerikEVENTLIST[] = $arr["namaEvent"];
+        $dataidNumerikEVENTLIST[] = $arr["id"];
+    }
+    // var_dump($datanumerikEVENTLIST);
+
+    //konversi data nama event dari history user jadi array numerik
+    $datanumerikHISTORYLIST = [];
+    $dataidnumerikHISTORYLIST = [];
+    foreach ($historyList as $arr) {
+        $datanumerikHISTORYLIST[] = $arr["history"];
+        $dataidnumerikHISTORYLIST[] = $arr["idEVENT"];
+    }
+    // var_dump($datanumerikHISTORYLIST);
+
+    //buat delete event jika admin delete event
+    $idsToDelete = [];
+    foreach ($dataidnumerikHISTORYLIST as $historyiduser) {
+        if (!in_array($historyiduser, $dataidNumerikEVENTLIST)) {
+            $idsToDelete[] = $historyiduser;
         }
-        exit;
     }
 
-    if (isset($_SESSION["showModal"]) && $_SESSION["showModal"] === true) {
-        $message = $_SESSION["message"];
-        $showModal = true;
-        unset($_SESSION["showModal"]);
-        unset($_SESSION["message"]);
+    if (!empty($idsToDelete)) {
+        $idsToDeleteStr = implode(',', $idsToDelete);
+        $query = "DELETE FROM `$studentEmail` WHERE idEVENT IN ($idsToDeleteStr)";
+        mysqli_query($koneksiDB, $query);
     }
+
+    // update ambil data terbaru
+    $jumlahHistory = getJumlahPendaftar($studentEmail);
+    // var_dump($jumlahHistory);
+
+    for ($i = 0; $i < $jumlahHistory; $i++) {
+        $id = intval($dataidnumerikHISTORYLIST[$i]);
+        $DapatNamaEvent = "SELECT namaEvent FROM eventlist WHERE id = $id";
+        $result = mysqli_query($koneksiDB, $DapatNamaEvent);
+
+        if ($result && mysqli_num_rows($result) > 0) {
+            $row = mysqli_fetch_assoc($result);
+            $namaEvent = $row['namaEvent'];
+            // var_dump($namaEvent);
+            $UPDATE = "UPDATE `$studentEmail` SET history = '$namaEvent' WHERE idEVENT = $id";
+            mysqli_query($koneksiDB, $UPDATE);
+        } else {
+            echo "No event found with the given ID: $id<br>";
+            die;
+        }
+    }
+
+    $historyList = getDATA($perintah);
 }
+
+$counter = 1;
+
+if (isset($_GET["id"]) && isset($_GET["namaEvent"])) {
+    if (hapusEvent($_GET["id"], $studentEmail, $_GET["namaEvent"]) === 1) {
+        $_SESSION["message"] = "berhasil di cancel";
+        $_SESSION["showModal"] = true;
+        echo "<script>document.location.href = 'historyStudent.php';</script>";
+    } else {
+        $_SESSION["message"] = "query error";
+        $_SESSION["showModal"] = true;
+        echo "<script>document.location.href = 'historyStudent.php';</script>";
+    }
+    exit;
+}
+
+if (isset($_SESSION["showModal"]) && $_SESSION["showModal"] === true) {
+    $message = $_SESSION["message"];
+    $showModal = true;
+    unset($_SESSION["showModal"]);
+    unset($_SESSION["message"]);
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -170,6 +231,19 @@ if (!isset($_SESSION["login-user"])) {
                 $(".modal-di-alert").html(Message);
                 myModal.show();
             <?php } ?>
+
+            let refreshCount = sessionStorage.getItem('refreshCount') || 0;
+            refreshCount = parseInt(refreshCount);
+
+            if (refreshCount < 2) {
+
+                sessionStorage.setItem('refreshCount', refreshCount + 1);
+
+                window.location.href = 'historyStudent.php';
+            } else {
+
+                sessionStorage.removeItem('refreshCount');
+            }
         });
     </script>
 </body>

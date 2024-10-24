@@ -4,29 +4,6 @@ $showModal = false;
 $perintah = "SELECT * FROM  eventlist";
 $EventList = getDATA($perintah);
 
-// biar folder foto dah terlalu penuh
-define('BASE_DIR', dirname(__FILE__) . '/../img Event/');
-$daftarFotoDB = getDATA("SELECT namaGambar FROM eventlist");
-$listNumerikFotoDB = [];
-foreach ($daftarFotoDB as $item) {
-    $listNumerikFotoDB[] = $item["namaGambar"];
-}
-$imgDirectory = BASE_DIR;
-$listIMGFolder = [];
-$files = scandir($imgDirectory);
-foreach ($files as $file) {
-    $listIMGFolder[] = $file;
-}
-
-foreach ($listIMGFolder as $item) {
-    if ($item === "." || $item === "..") {
-        continue;
-    } else {
-        if (!in_array($item,  $listNumerikFotoDB)) {
-            unlink($imgDirectory . $item);
-        }
-    }
-}
 
 if (isset($_SESSION["login-admin"])) {
     header("Location: indexAdmin.php");
@@ -58,7 +35,7 @@ if (isset($_POST["daftar-event"])) {
     } else {
         // var_dump($safeUserData);
         // var_dump($_POST["event-title-db"]);
-        $hasilDaftar = daftarEvent($safeUserData, $_POST["event-title-db"]);
+        $hasilDaftar = daftarEvent($safeUserData, $_POST["event-title-db"], intval($_POST["id-title-db"]));
         if ($hasilDaftar === 1) {
             $message = "anda berhasil terdaftar!";
             $showModal = true;
@@ -189,7 +166,7 @@ if (isset($_POST["daftar-event"])) {
             <div class="row mt-4">
                 <?php foreach ($EventList as $array) { ?>
                     <div class="col-12 col-md-6 col-lg-4 col-xxl-3 my-2">
-                        <div class="card mx-auto" style="width: 100%; max-height:450px; overflow-y:auto;">
+                        <div class="card mx-auto" style="width: 100%; height:450px; overflow-y:auto;">
                             <img src="../img Event/<?php echo $array["namaGambar"]; ?>" class="card-img-top" alt="<?php echo $array["namaEvent"]; ?>">
                             <div class="card-body">
                                 <div class="card-title"><?php echo $array["namaEvent"]; ?></div>
@@ -324,6 +301,7 @@ if (isset($_POST["daftar-event"])) {
                             <div class="container">
                                 <h5 id="event-title"></h5>
                                 <input type="hidden" name="event-title-db" id="namaEventdb" value="">
+                                <input type="hidden" name="id-title-db" id="IDEventdb" value="">
                                 <p id="event-tanggal"></p>
                                 <p id="event-detail"></p>
                             </div>

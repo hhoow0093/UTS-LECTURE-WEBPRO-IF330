@@ -1,5 +1,29 @@
 <?php
 require "./function.php";
+
+// biar folder foto dah terlalu penuh
+$daftarFotoDB = getDATA("SELECT namaGambar FROM eventlist");
+$listNumerikFotoDB = [];
+foreach ($daftarFotoDB as $item) {
+    $listNumerikFotoDB[] = $item["namaGambar"];
+}
+$imgDirectory = BASE_DIR;
+$listIMGFolder = [];
+$files = scandir($imgDirectory);
+foreach ($files as $file) {
+    $listIMGFolder[] = $file;
+}
+
+foreach ($listIMGFolder as $item) {
+    if ($item === "." || $item === "..") {
+        continue;
+    } else {
+        if (!in_array($item,  $listNumerikFotoDB)) {
+            unlink($imgDirectory . $item);
+        }
+    }
+}
+
 $showModal = false;
 if (!isset($_SESSION["login-admin"])) {
     header("Location : Loginadmin.php");
@@ -17,33 +41,28 @@ if (!isset($_SESSION["login-admin"])) {
     // var_dump($listEvent);
     if (isset($_POST["buat-event"])) {
         $hasilAddEvent = addEvent($_POST);
-        if($hasilAddEvent === 0){
+        if ($hasilAddEvent === 0) {
             $message = "masukkan data yang lengkap";
             $showModal = true;
-            
-        }else if($hasilAddEvent === -1){
+        } else if ($hasilAddEvent === -1) {
             $message = "file ekstensi salah!";
             $showModal = true;
-        }else if($hasilAddEvent === -2){
+        } else if ($hasilAddEvent === -2) {
             $message = "prepare statement bermasalah!";
             $showModal = true;
-        }
-        else if($hasilAddEvent === -3){
+        } else if ($hasilAddEvent === -3) {
             $message = "execute statement bermasalah!";
             $showModal = true;
-        }
-        else if($hasilAddEvent === -4){
+        } else if ($hasilAddEvent === -4) {
             $message = "uploading file bermasalah!";
             $showModal = true;
-        }
-        else if($hasilAddEvent === -5){
+        } else if ($hasilAddEvent === -5) {
             $message = "tidak boleh buat event yang sama";
             $showModal = true;
-        }else if($hasilAddEvent === 1){
+        } else if ($hasilAddEvent === 1) {
             $message = "sukses";
             $showModal = true;
         }
-
     }
 }
 
@@ -115,7 +134,9 @@ if (!isset($_SESSION["login-admin"])) {
                         <th>Nama Event</th>
                         <th>Jumlah Pendaftar Event</th>
                         <th>Maskimum pendaftaran</th>
-                        <th>Action</th> <!-- Delete dan edit-->
+                        <th>Edit Event</th>
+                        <th>Delete Event</th>
+                        <th>Registrant list</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -128,10 +149,15 @@ if (!isset($_SESSION["login-admin"])) {
                             <td><?php echo $jumlahPendaftar; ?></td>
                             <td><?php echo $arr["maksimum_participant"]; ?></td>
                             <td>
-                                <div class="container d-inline-block">
-                                    <a href=""><button type="button" class="btn btn-outline-primary">Edit Event</button></a>
-                                    <a href=""><button type="button" class="btn btn-outline-danger mt-2 mt-lg-0">Delete Event</button></a>
-                                </div>
+                                <a href="./EditEventAdmin.php?id=<?php echo $arr["id"];?>"><button type="button" class="btn btn-outline-primary">Edit Event</button></a>
+
+                            </td>
+                            <td>
+                                <a href="./DeleteEventAdmin.php?id=<?php echo $arr["id"];?>&nama=<?php echo $arr["namaEvent"];?>"><button type="button" class="btn btn-outline-danger" onclick="return confirm('are you sure to delete?');">Delete Event</button></a>
+                            </td>
+                            <td>
+                                <a href="./convertXL.php?id=<?php echo $arr["id"];?>&nama=<?php echo $arr["namaEvent"];?>"><button type="button" class="btn btn-outline-success">Download registrant</button></a>
+                                <a href="./viewRegis.php?id=<?php echo $arr["id"];?>&nama=<?php echo $arr["namaEvent"];?>"><button type="button" class="btn btn-outline-info">Check Registrant</button></a>
                             </td>
                         </tr>
                     <?php } ?>
@@ -140,7 +166,10 @@ if (!isset($_SESSION["login-admin"])) {
                     <tr>
                         <th>Nama Event</th>
                         <th>Jumlah Pendaftar Event</th>
-                        <th>Action</th> <!-- Delete dan edit-->
+                        <th>Maskimum pendaftaran</th>
+                        <th>Edit Event</th>
+                        <th>Delete Event</th>
+                        <th>Registrant list</th>
                     </tr>
                 </tfoot>
             </table>
@@ -225,9 +254,9 @@ if (!isset($_SESSION["login-admin"])) {
     <script>
         $(document).ready(function() {
             $('#example').DataTable({
-            responsive: true,
-            lengthMenu: [3, 5, 10],
-        });
+                responsive: true,
+                lengthMenu: [3, 5, 10],
+            });
             <?php if ($showModal) { ?>
                 var myModal = new bootstrap.Modal(document.getElementById('AlertPopup'), {
                     keyboard: false
@@ -235,7 +264,7 @@ if (!isset($_SESSION["login-admin"])) {
                 var Message = "<?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>";
                 $(".modal-di-alert").html(Message);
                 myModal.show();
-                <?php if ($hasilAddEvent === 1){ ?>
+                <?php if ($hasilAddEvent === 1) { ?>
                     setTimeout(function() {
                         window.location.href = 'indexAdmin.php';
                     }, 2000);

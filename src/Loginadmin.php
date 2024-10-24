@@ -1,7 +1,8 @@
 <?php
 require "./function.php";
 $showModal = false;
-
+// admin@umn.ac.id.com
+// adminumn123
 if (isset($_POST['loginAdmin'])) {
     // var_dump($_POST);
     $resultLogin = loginAdmin($_POST);

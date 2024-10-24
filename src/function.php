@@ -1,6 +1,7 @@
 <?php
 session_start();
 $koneksiDB = mysqli_connect("localhost", "root", "", "UMNEvent");
+define('BASE_DIR', dirname(__FILE__) . '/../img Event/');
 
 function getDATA($perintah)
 {
@@ -59,7 +60,8 @@ function register($data)
 
     $perintahAkunBaru = "CREATE TABLE `$usernameEmailRegister` (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    history VARCHAR(100)
+    history VARCHAR(100),
+    idEVENT int
     )";
     mysqli_query($koneksiDB, $perintahAkunBaru);
 
@@ -126,7 +128,7 @@ function loginStudent($data)
     }
 }
 
-function daftarEvent($dataStudent, $namaEvent)
+function daftarEvent($dataStudent, $namaEvent, $idEVENT)
 {
     global $koneksiDB;
     $studentEmail = $dataStudent["email"];
@@ -163,7 +165,7 @@ function daftarEvent($dataStudent, $namaEvent)
     }
 
     $perintah1 = "INSERT INTO `$namaEvent` VALUES ('', '$studentEmail')";
-    $perintah2 = "INSERT INTO `$studentEmail` VALUES('', '$namaEvent')";
+    $perintah2 = "INSERT INTO `$studentEmail` VALUES('', '$namaEvent', $idEVENT)";
 
     if (!mysqli_query($koneksiDB, $perintah1)) {
         error_log("Error executing query 1: " . mysqli_error($koneksiDB));
@@ -207,6 +209,10 @@ function editMahasiswaUser($data, $idSISWA)
     // $emailMahasiswa = $data["EmailStudent"];
     $username = mysqli_real_escape_string($koneksiDB, $data["userNamesiswa"]);
     $password = $data["PasswordSiswa"];
+
+    if (empty($username) && empty($password)) {
+        return -1;
+    }
 
     if ($password === "") {
         $perintah = "UPDATE account SET username = '$username' WHERE id = $idSISWA";
@@ -279,7 +285,7 @@ function getJumlahPendaftar($namaEvent)
 function addEvent($data)
 {
     global $koneksiDB;
-    define('BASE_DIR', dirname(__FILE__) . '/../img Event/');
+    
 
     $eventName = $data["NamaEvent"];
     $tanggalEvent = $data["EventDate"];
@@ -345,57 +351,93 @@ function addEvent($data)
             }
             return 1;
         }
-    }else{
+    } else {
         return -5;
     }
 }
 
-// untuk cari tabel pada database
+function EditEvent($data, $id)
+{
+    //untuk alter tabel pada database jika nama event pengen diganti dan makesure nama event tidak boleh empty string
+    global $koneksiDB;
+    $eventNameLama = $data["NamaEventLama"];
+    $eventNameBaru = $data["NamaEvent"];
+    $tanggalEvent = $data["EventDate"];
+    $waktu = $data["Time"];
+    $lokasi = $data["Location"];
+    $jumlahKuota = $data["participants"];
+    $deskripsi = $data["description"];
+    $fotoLama = $data["PictureLama"];
 
-// $databaseName = 'your_database_name';
-// $tableNameToFind = 'users';
+    if ($_FILES["Picture"]["error"] === 4) {
+        $gambar = $fotoLama;
+    } else {
+        $gambar = $_FILES["Picture"]["name"];
+        $tmp_name = $_FILES["Picture"]["tmp_name"];
 
-// $query = "SELECT table_name 
-//           FROM information_schema.tables 
-//           WHERE table_schema = ? 
-//           AND table_name = ?";
+        $ekstensiValid = ["png", "jpeg", "jpg"];
+        $ekstensiFoto = explode(".", $gambar);
+        $ekstensiFoto = strtolower(end($ekstensiFoto));
+        if (!in_array($ekstensiFoto, $ekstensiValid)) {
+            return -1; //ekstensi foto salah
+        }
+        $gambar = uniqid() . "." . $ekstensiFoto;
+    }
 
-// $stmt = mysqli_prepare($koneksiDB, $query);
-// if ($stmt) {
-//     mysqli_stmt_bind_param($stmt, "ss", $databaseName, $tableNameToFind);
-//     mysqli_stmt_execute($stmt);
-//     mysqli_stmt_bind_result($stmt, $tableName);
+    // Ensure event name is not empty
+    if (empty($eventNameBaru)) {
+        return -2; // Event name cannot be empty
+    }
 
-//     if (mysqli_stmt_fetch($stmt)) {
-//         echo "Table '$tableNameToFind' found in database '$databaseName'.";
-//     } else {
-//         echo "Table '$tableNameToFind' not found in database '$databaseName'.";
-//     }
+    // Check if event name has changed
+    if ($eventNameLama !== $eventNameBaru) {
+        $perintahTable = "RENAME TABLE `$eventNameLama` TO `$eventNameBaru`";
+        if (!mysqli_query($koneksiDB, $perintahTable)) {
+            return -4; // kesalahan pada rename table
+        }
+    }
 
-//     mysqli_stmt_close($stmt);
-// } else {
-//     echo "Error preparing statement: " . mysqli_error($koneksiDB);
-// }
+    // Update event details in the database
+    $perintah = "UPDATE eventlist SET
+                 namaEvent = ?,
+                 tanggalEvent = ?,
+                 description = ?,
+                 namaGambar = ?,
+                 waktu = ?,
+                 lokasi = ?,
+                 maksimum_participant = ?
+                 WHERE id = ?";
+    $stmt = $koneksiDB->prepare($perintah);
+    if ($stmt === false) {
+        // Handle error in preparing the statement
+        return -3;
+    }
+    $stmt->bind_param("sssssssi", $eventNameBaru, $tanggalEvent, $deskripsi, $gambar, $waktu, $lokasi, $jumlahKuota, $id);
+    $executeResult = $stmt->execute();
+    if ($executeResult === false) {
+        // Handle error in executing the statement
+        return -5;
+    }
 
+    // Move uploaded file if a new file was provided
+    if ($_FILES["Picture"]["error"] !== 4) {
+        $imgDirectory = BASE_DIR;
+        move_uploaded_file($tmp_name, $imgDirectory . $gambar);
+    }
 
-// untuk rename table pada database
-// function renameTable($oldTableName, $newTableName, $koneksiDB) {
-//     // Sanitize table names to prevent SQL injection
-//     $oldTableName = mysqli_real_escape_string($koneksiDB, $oldTableName);
-//     $newTableName = mysqli_real_escape_string($koneksiDB, $newTableName);
+    return 1; // Success
+}
 
-//     // Prepare the RENAME TABLE query
-//     $query = "RENAME TABLE `$oldTableName` TO `$newTableName`";
-
-//     // Execute the query
-//     if (mysqli_query($koneksiDB, $query)) {
-//         echo "Table renamed successfully from '$oldTableName' to '$newTableName'.";
-//     } else {
-//         echo "Error renaming table: " . mysqli_error($koneksiDB);
-//     }
-// }
-
-// // Example usage
-// $oldTableName = 'old_users';
-// $newTableName = 'new_users';
-// renameTable($oldTableName, $newTableName, $koneksiDB);
+function deleteEvent($id, $namaEvent){
+    global $koneksiDB;
+    $perintah1 = "DROP TABLES `$namaEvent`";
+    $perintah2 = "DELETE FROM eventlist WHERE id = $id";
+    if(!mysqli_query($koneksiDB, $perintah1)){
+        return -1; // drop tables gak berguna
+    }else if(!mysqli_query($koneksiDB, $perintah2)){
+        return -2; //delete tabel pada eventlist salah
+    }else{
+        return 1; // berhasil
+    }
+}
+?>

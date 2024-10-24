@@ -1,0 +1,19 @@
+{
+    "name": "user/src",
+    "description": "Composer untuk excel",
+    "autoload": {
+        "psr-4": {
+            "User\\Src\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "hhoow0093",
+            "email": "howarddai2005@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "phpoffice/phpspreadsheet": "dev-master"
+    }
+}

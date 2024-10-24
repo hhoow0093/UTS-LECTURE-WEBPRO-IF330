@@ -46,6 +46,10 @@ if (!isset($_SESSION["login-user"])) {
             $message = "query error";
             $showModal = true;
         }
+        else if ($hasilEdit === -1) {
+            $message = "edit batal karena isi form kosong semua";
+            $showModal = true;
+        }
     }
 }
 ?>
